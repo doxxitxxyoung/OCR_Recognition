@@ -1,5 +1,7 @@
-<<<<<<< HEAD
-# OCR_Recognition_PF
-=======
 # OCR_Recognition
->>>>>>> 2e29939ca5a3b0d462fcbd53ec39a4b4d0d31aca
+
+1. Download data.zip & params.zip from https://drive.google.com/open?id=1H3oiqq5g2kJutNuLZJvX4D58KnWGZI5a
+
+2. Unzip files from data.zip & params.zip into the folder with its name respectively
+
+3. run run_model.sh
