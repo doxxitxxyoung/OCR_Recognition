@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 from PIL import ImageEnhance
 import cv2
-from ocr import get_ocr
+#from ocr import get_ocr
 import glob
 
 import argparse
@@ -379,5 +379,161 @@ def main_aster():
 
     get_score(test_label, test_pred)
 
-main_aster()
+def get_data_pred(filename, args):
+    """
+    @ input
+    filename: ex. kr00001973962b1p-4
+    
+    @ output
+    image
+    """
+    
+#        xmlfile = filename
+    jpgfile = filename.replace(".xml",".jpg")
+    
+#    doc = ET.parse(xmlfile)
+#    root = doc.getroot()
+#    object_dict = {}
+#    for x in root.findall('object'):
+#        coord = '/'.join([x.find('bndbox').find('xmin').text,
+#                x.find('bndbox').find('ymin').text,
+#                x.find('bndbox').find('xmax').text,
+#                x.find('bndbox').find('ymax').text])
+#        label = x.find('name').text
+#        object_dict[coord] = label
+
+    if args.image_format == 'cv2':
+        image = cv2.imread(jpgfile, cv2.IMREAD_COLOR)
+    else:
+        image = Image.open(jpgfile)
+
+    return image
+
+
+class Pred_Aster():
+    def __init__(self):
+        
+        args = get_args(sys.argv[1:])
+
+        np.random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+        cudnn.benchmark = True
+        torch.backends.cudnn.deterministic = True
+
+        args.cuda = True and torch.cuda.is_available()
+
+        if args.cuda:
+            print('using cuda.')
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        else:
+            torch.set_default_tensor_type('torch.FloatTensor')
+
+        #   Create Character dict & max seq len
+        args, char2id_dict , id2char_dict= Create_char_dict(args)
+
+        print(id2char_dict)
+        rec_num_classes = len(id2char_dict)
+
+        #   Get rec num classes / max len
+        print('max len : '+str(args.max_len))
+
+
+        #   init model
+
+        encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group)
+
+        encoder_out_planes = encoder.out_planes
+
+        decoder = AttentionRecognitionHead(num_classes = rec_num_classes,
+                                            in_planes = encoder_out_planes,
+                                            sDim = args.decoder_sdim,
+                                            attDim = args.attDim,
+                                            max_len_labels = args.max_len)
+
+        encoder.load_state_dict(torch.load('params/encoder_final'))
+        decoder.load_state_dict(torch.load('params/decoder_final'))
+        print('fine-tuned model loaded')
+
+
+        device = torch.device('cuda')
+        encoder.to(device)
+        decoder.to(device)
+
+        self.encoder = encoder
+        self.decoder = decoder
+        self.device = device
+        self.args = args
+
+
+    def forward(self, image_path, coordinates):
+
+        """
+        @input
+        image paths : One image path without '.xml' or '.png'
+        coordinates: A List of coordinates
+
+        @output : A List of characters
+        """
+
+        args = self.args
+        encoder = self.encoder
+        decoder = self.decoder
+        device = self.device
+
+        image = get_data_pred(image_path, args)
+
+        cropped_images = crop_image(image,coordinates, args, resample = Image.BICUBIC) # list of imgs
+
+        cropped_images = [{'images' : x, 'rec_targets' : 0, 'rec_lengths' : 0} 
+                           for x in cropped_images]
+
+        #   data loader
+        test_pred = []
+        test_image = []
+
+        test_loader = DataLoader(cropped_images, 
+                                batch_size = args.batch_size,
+                                shuffle = False,
+                                collate_fn = AlignCollate(
+                                    imgH = args.height, imgW = args.width, keep_ratio = True)
+                                )
+
+        for batch_idx, batch in enumerate(test_loader):
+
+            x = batch[0].to(device)
+
+            encoder_feats = self.encoder(x)
+            rec_pred, rec_pred_scores = decoder.beam_search(encoder_feats,\
+                                                    args.beam_width, args.eos)
+
+            rec_pred = rec_pred.detach().cpu().numpy()
+            test_pred.extend(rec_pred)
+            test_image.extend(x.detach().cpu().numpy())
+
+        return test_pred
+
+
+if __name__ == "__main__":
+    main_aster()
+
+
+"""
+model = Pred_Aster()
+
+filenames = [x+'.xml' for x in file_val_list]
+
+args = get_args(sys.argv[1:])
+for i, filename in enumerate(filenames):
+    if i == 0:
+        image, coordinates, labels = get_data(filename, args)
+
+        pred = model.forward(filename, coordinates)
+
+        print(pred)
+        print(labels)
+"""
+
+
 
