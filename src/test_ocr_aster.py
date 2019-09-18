@@ -391,17 +391,6 @@ def get_data_pred(filename, args):
 #        xmlfile = filename
     jpgfile = filename.replace(".xml",".jpg")
     
-#    doc = ET.parse(xmlfile)
-#    root = doc.getroot()
-#    object_dict = {}
-#    for x in root.findall('object'):
-#        coord = '/'.join([x.find('bndbox').find('xmin').text,
-#                x.find('bndbox').find('ymin').text,
-#                x.find('bndbox').find('xmax').text,
-#                x.find('bndbox').find('ymax').text])
-#        label = x.find('name').text
-#        object_dict[coord] = label
-
     if args.image_format == 'cv2':
         image = cv2.imread(jpgfile, cv2.IMREAD_COLOR)
     else:
@@ -465,6 +454,8 @@ class Pred_Aster():
         self.decoder = decoder
         self.device = device
         self.args = args
+        self.char2id_dict = char2id_dict
+        self.id2char_dict = id2char_dict
 
 
     def forward(self, image_path, coordinates):
@@ -512,7 +503,7 @@ class Pred_Aster():
             test_pred.extend(rec_pred)
             test_image.extend(x.detach().cpu().numpy())
 
-        return test_pred
+        return test_pred, self.id2char_dict
 
 
 if __name__ == "__main__":
@@ -529,7 +520,7 @@ for i, filename in enumerate(filenames):
     if i == 0:
         image, coordinates, labels = get_data(filename, args)
 
-        pred = model.forward(filename, coordinates)
+        pred, id2char_dict = model.forward(filename, coordinates)
 
         print(pred)
         print(labels)
