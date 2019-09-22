@@ -457,6 +457,13 @@ class Pred_Aster():
         self.char2id_dict = char2id_dict
         self.id2char_dict = id2char_dict
 
+    def idx2char(self, pred, id2char_dict, eos='EOS'):
+        eos_idx = [x for x in id2char_dict.keys() if id2char_dict[x]==eos][0]
+        pred = pred[:pred.tolist().index(eos_idx)]
+        pred = [id2char_dict[x] for x in pred]
+        pred_char = ''.join(pred)
+        return pred_char
+
 
     def forward(self, image_path, coordinates):
 
@@ -503,7 +510,9 @@ class Pred_Aster():
             test_pred.extend(rec_pred)
             test_image.extend(x.detach().cpu().numpy())
 
-        return test_pred, self.id2char_dict
+        test_pred_char = [self.idx2char(x, self.id2char_dict) for x in test_pred]
+
+        return test_pred_char
 
 
 if __name__ == "__main__":
@@ -511,19 +520,20 @@ if __name__ == "__main__":
 
 
 """
-model = Pred_Aster()
+if __name__ == "__main__":
+    model = Pred_Aster()
 
-filenames = [x+'.xml' for x in file_val_list]
+    filenames = [x+'.xml' for x in file_val_list]
 
-args = get_args(sys.argv[1:])
-for i, filename in enumerate(filenames):
-    if i == 0:
-        image, coordinates, labels = get_data(filename, args)
+    args = get_args(sys.argv[1:])
+    for i, filename in enumerate(filenames):
+        if i == 0:
+            image, coordinates, labels = get_data(filename, args)
 
-        pred, id2char_dict = model.forward(filename, coordinates)
+            pred_char = model.forward(filename, coordinates)
 
-        print(pred)
-        print(labels)
+            print(pred_char)
+            print(labels)
 """
 
 
