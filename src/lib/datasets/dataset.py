@@ -27,12 +27,13 @@ from lib.utils import to_numpy
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-from config import get_args
-global_args = get_args(sys.argv[1:])
+#from config import get_args
+#global_args = get_args(sys.argv[1:])
 
-if global_args.run_on_remote:
-  import moxing as mox
+#if global_args.run_on_remote:
+#  import moxing as mox
 
+"""
 class LmdbDataset(data.Dataset):
   def __init__(self, root, voc_type, max_len, num_samples, transform=None):
     super(LmdbDataset, self).__init__()
@@ -120,6 +121,7 @@ class LmdbDataset(data.Dataset):
     if self.transform is not None:
       img = self.transform(img)
     return img, label, label_len
+"""
 
 
 class ResizeNormalize(object):
@@ -134,7 +136,7 @@ class ResizeNormalize(object):
     img.sub_(0.5).div_(0.5)
     return img
 
-
+"""
 class RandomSequentialSampler(sampler.Sampler):
 
   def __init__(self, data_source, batch_size):
@@ -159,6 +161,7 @@ class RandomSequentialSampler(sampler.Sampler):
       index[(i + 1) * self.batch_size:] = tail_index
 
     return iter(index.tolist())
+"""
 
 
 class AlignCollate(object):
@@ -199,7 +202,7 @@ class AlignCollate(object):
 
     return b_images, b_labels, b_lengths
 
-
+"""
 def test():
   # lmdb_path = "/share/zhui/reg_dataset/NIPS2014"
   lmdb_path = "/share/zhui/reg_dataset/IIIT5K_3000"
@@ -227,6 +230,7 @@ def test():
       print(labels2strs(label, train_dataset.id2char, train_dataset.char2id))
       print(label_len.item())
       input()
+"""
 
 
 if __name__ == "__main__":

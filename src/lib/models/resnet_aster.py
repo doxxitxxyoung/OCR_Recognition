@@ -5,8 +5,8 @@ import torchvision
 import sys
 import math
 
-from config import get_args
-global_args = get_args(sys.argv[1:])
+#from config import get_args
+#global_args = get_args(sys.argv[1:])
 
 
 def conv3x3(in_planes, out_planes, stride=1):
