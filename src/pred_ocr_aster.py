@@ -1,4 +1,6 @@
 #!usr/bin/python
+from __future__ import absolute_import
+
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
@@ -11,27 +13,29 @@ import argparse
 import os
 import sys
 
-from file_list_final import file_train_list, file_val_list
 
-#from lib.models.model_builder import ModelBuilder
-from lib.models.resnet_aster import ResNet_ASTER
-from lib.models.attention_recognition_head import AttentionRecognitionHead
-#from lib.loss.sequenceCrossEntropyLoss import SequenceCrossEntropyLoss
-#from config import get_args
+import pickle
 
 import torch
 import torch.nn as nn
 from torch.backends import cudnn
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
+
+from file_list_final import file_train_list, file_val_list
+
 from lib.datasets.dataset import AlignCollate, ResizeNormalize
 #from lib.utils.serialization import load_checkpoint, save_checkpoint
+#from lib.models.model_builder import ModelBuilder
+from lib.models.resnet_aster import ResNet_ASTER
+from lib.models.attention_recognition_head import AttentionRecognitionHead
+#from lib.loss.sequenceCrossEntropyLoss import SequenceCrossEntropyLoss
+#from config import get_args
 
-import pickle
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-import yaml
-
+current_path = os.path.dirname(os.path.abspath(__file__)) 
 
 def get_data(filename, args):
     """
@@ -258,8 +262,10 @@ class Pred_Aster():
                                             attDim = args.attDim,
                                             max_len_labels = args.max_len)
 
-        encoder.load_state_dict(torch.load('params/encoder_final'))
-        decoder.load_state_dict(torch.load('params/decoder_final'))
+#        encoder.load_state_dict(torch.load('params/encoder_final'))
+#        decoder.load_state_dict(torch.load('params/decoder_final'))
+        encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
+        decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
         print('fine-tuned model loaded')
 
 
