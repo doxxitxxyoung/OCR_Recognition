@@ -217,21 +217,25 @@ def get_data_pred(filename, args):
 
 
 class Pred_Aster():
-    def __init__(self):
+    def __init__(self, config):
         
 #        from config import get_args
 #        args = get_args(sys.argv[1:])
         from pred_params import Get_ocr_args
         args = Get_ocr_args()
 
+        args.cuda = config.cuda
+         
+
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
-        torch.cuda.manual_seed(args.seed)
-        torch.cuda.manual_seed_all(args.seed)
-        cudnn.benchmark = True
-        torch.backends.cudnn.deterministic = True
+        if args.cuda == True:
+            torch.cuda.manual_seed(args.seed)
+            torch.cuda.manual_seed_all(args.seed)
+            cudnn.benchmark = True
+            torch.backends.cudnn.deterministic = True
 
-        args.cuda = True and torch.cuda.is_available()
+#        args.cuda = True and torch.cuda.is_available()
 
         if args.cuda:
             print('using cuda.')
@@ -269,7 +273,10 @@ class Pred_Aster():
         print('fine-tuned model loaded')
 
 
-        device = torch.device('cuda')
+        if args.cuda == True:
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
         encoder.to(device)
         decoder.to(device)
 
@@ -324,6 +331,7 @@ class Pred_Aster():
         for batch_idx, batch in enumerate(test_loader):
 
             x = batch[0].to(device)
+            print(type(x))
 
             encoder_feats = self.encoder(x)
             rec_pred, rec_pred_scores = decoder.beam_search(encoder_feats,\
@@ -345,7 +353,6 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__":
-    model = Pred_Aster()
 
     filenames = [x+'.xml' for x in file_val_list]
 
@@ -353,6 +360,9 @@ if __name__ == "__main__":
 #    args = get_args(sys.argv[1:])
     from pred_params import Get_ocr_args
     args = Get_ocr_args()
+
+    model = Pred_Aster(args)
+
     for i, filename in enumerate(filenames):
         if i < 10:
             image, coordinates, labels = get_data(filename, args)
@@ -361,6 +371,4 @@ if __name__ == "__main__":
 
             print(pred_char)
             print(labels)
-
-
 

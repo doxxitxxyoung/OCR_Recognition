@@ -113,7 +113,8 @@ class ResNet_ASTER(nn.Module):
 
   def forward(self, x):
     ####
-    x = x.type(torch.cuda.FloatTensor) #    128 x 3 x 64 x 144
+    
+#    x = x.type(torch.cuda.FloatTensor) #    128 x 3 x 64 x 144
 #    if len(x.size()) == 3:
 #      x = x.unsqueeze(1) # no of channels : 1
         
