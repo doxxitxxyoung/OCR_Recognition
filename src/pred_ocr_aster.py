@@ -195,7 +195,6 @@ def Create_data_list(args, char2id, train):
 
     return input_list, args
 
-
 def get_data_pred(filename, args):
     """
     @ input
@@ -268,8 +267,12 @@ class Pred_Aster():
 
 #        encoder.load_state_dict(torch.load('params/encoder_final'))
 #        decoder.load_state_dict(torch.load('params/decoder_final'))
-        encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
-        decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
+        if args.cuda == True:
+            encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
+            decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
+        else:
+            encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final_cpu'))
+            decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final_cpu'))
         print('fine-tuned model loaded')
 
 

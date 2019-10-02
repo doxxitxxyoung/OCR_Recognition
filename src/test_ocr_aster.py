@@ -32,6 +32,7 @@ from lib.utils.serialization import load_checkpoint, save_checkpoint
 
 import pickle
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 def get_data(filename, args):
     """
@@ -195,24 +196,29 @@ def Create_data_list(args, char2id, train):
 #def main_aster(args):
 def main_aster():
 
-    from config import get_args
-    args = get_args(sys.argv[1:])
+#    from config import get_args
+#    args = get_args(sys.argv[1:])
+
+    from pred_params import Get_ocr_args
+    args = Get_ocr_args()
 
     print('Evaluation : '+str(args.eval))
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    cudnn.benchmark = True
-    torch.backends.cudnn.deterministic = True
+    if args.cuda:
+        torch.cuda.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+        cudnn.benchmark = True
+        torch.backends.cudnn.deterministic = True
 
-    args.cuda = True and torch.cuda.is_available()
+#    args.cuda = True and torch.cuda.is_available()
 
     if args.cuda:
         print('using cuda.')
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
     else:
+        print('using cpu.')
         torch.set_default_tensor_type('torch.FloatTensor')
 
     #   Create Character dict & max seq len
@@ -242,7 +248,7 @@ def main_aster():
 
     #   Load pretrained weights
     if not args.eval:
-        pretrain_path = '../data/demo.pth.tar'
+        pretrain_path = './data/demo.pth.tar'
         pretrained_dict = torch.load(pretrain_path)['state_dict']
         encoder_dict = {}
         decoder_dict = {}
@@ -313,9 +319,12 @@ def main_aster():
                 loss_rec.backward()
                 optimizer.step()
 
-
-        torch.save(encoder.state_dict(), 'params/encoder_final')
-        torch.save(decoder.state_dict(), 'params/decoder_final')
+        if args.cuda:
+            torch.save(encoder.state_dict(), 'params/encoder_final')
+            torch.save(decoder.state_dict(), 'params/decoder_final')
+        else:
+            torch.save(encoder.state_dict(), 'params/encoder_final_cpu')
+            torch.save(decoder.state_dict(), 'params/decoder_final_cpu')
 
 
     
@@ -517,7 +526,6 @@ class Pred_Aster():
         return test_pred_char
 
 
-"""
 if __name__ == "__main__":
     main_aster()
 """
@@ -539,5 +547,6 @@ if __name__ == "__main__":
             print(pred_char)
             print(labels)
 
+"""
 
 
