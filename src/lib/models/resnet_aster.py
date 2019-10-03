@@ -118,7 +118,6 @@ class ResNet_ASTER(nn.Module):
 #    if len(x.size()) == 3:
 #      x = x.unsqueeze(1) # no of channels : 1
         
-    
     x0 = self.layer0(x)
     x1 = self.layer1(x0)
     x2 = self.layer2(x1)

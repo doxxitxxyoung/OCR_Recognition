@@ -50,7 +50,7 @@ parser.add_argument('--weight_decay', type=float, default=0.0) # the model maybe
 parser.add_argument('--grad_clip', type=float, default=1.0)
 parser.add_argument('--loss_weights', nargs='+', type=float, default=[1,1,1])                    
 
-parser.add_argument('--seed', type=int, default=1)
+#parser.add_argument('--seed', type=int, default=1)
 parser.add_argument('--print_freq', type=int, default=100)
 parser.add_argument('--cuda', default=True, type=bool,
                     help='whether use cuda support.')
@@ -58,7 +58,7 @@ parser.add_argument('--cuda', default=True, type=bool,
 parser.add_argument('--beam_width', type=int, default=5)
 
 
-parser.add_argument('--n_epochs', type = int, default = 10)
+#parser.add_argument('--n_epochs', type = int, default = 10)
 parser.add_argument('--batch_size', type = int, default = 128)
 parser.add_argument('--n_group', type = int, default = 1)
 parser.add_argument('--rec_num_classes', type = int, default = 26)

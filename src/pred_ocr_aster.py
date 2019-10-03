@@ -48,6 +48,10 @@ def get_data(filename, args):
     
     xmlfile = filename
     jpgfile = filename.replace(".xml",".jpg")
+
+#    xmlfile = '.'+xmlfile
+#    jpgfile = '.'+jpgfile
+
     
     doc = ET.parse(xmlfile)
     root = doc.getroot()
@@ -216,16 +220,16 @@ def get_data_pred(filename, args):
 
 
 class Pred_Aster():
-    def __init__(self, config):
+#    def __init__(self, cuda):
+    def __init__(self, cuda):
         
 #        from config import get_args
 #        args = get_args(sys.argv[1:])
         from pred_params import Get_ocr_args
         args = Get_ocr_args()
 
-        args.cuda = config.cuda
+        args.cuda = cuda
          
-
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
         if args.cuda == True:
@@ -240,6 +244,7 @@ class Pred_Aster():
             print('using cuda.')
             torch.set_default_tensor_type('torch.cuda.FloatTensor')
         else:
+            print('using cpu.')
             torch.set_default_tensor_type('torch.FloatTensor')
 
         #   Create Character dict & max seq len
@@ -271,21 +276,22 @@ class Pred_Aster():
             encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
             decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
         else:
-            encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final_cpu'))
-            decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final_cpu'))
+            encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final',map_location=torch.device('cpu')))
+            decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final',map_location=torch.device('cpu')))
         print('fine-tuned model loaded')
 
 
         if args.cuda == True:
             device = torch.device('cuda')
+            encoder.to(device)
+            decoder.to(device)
+            self.device = device
         else:
-            device = torch.device('cpu')
-        encoder.to(device)
-        decoder.to(device)
+            pass
 
         self.encoder = encoder
         self.decoder = decoder
-        self.device = device
+        
         self.args = args
         self.char2id_dict = char2id_dict
         self.id2char_dict = id2char_dict
@@ -311,7 +317,8 @@ class Pred_Aster():
         args = self.args
         encoder = self.encoder
         decoder = self.decoder
-        device = self.device
+        if args.cuda:
+            device = self.device
 
         image = get_data_pred(image_path, args)
 
@@ -332,9 +339,10 @@ class Pred_Aster():
                                 )
 
         for batch_idx, batch in enumerate(test_loader):
-
-            x = batch[0].to(device)
-            print(type(x))
+            if args.cuda:
+                x = batch[0].to(device)
+            else:
+                x = batch[0]
 
             encoder_feats = self.encoder(x)
             rec_pred, rec_pred_scores = decoder.beam_search(encoder_feats,\
@@ -364,9 +372,12 @@ if __name__ == "__main__":
     from pred_params import Get_ocr_args
     args = Get_ocr_args()
 
-    model = Pred_Aster(args)
+    use_cuda=False
+
+    model = Pred_Aster(use_cuda)
 
     for i, filename in enumerate(filenames):
+        
         if i < 10:
             image, coordinates, labels = get_data(filename, args)
 

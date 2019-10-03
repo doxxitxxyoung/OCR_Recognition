@@ -270,7 +270,10 @@ def main_aster():
 
     rec_crit = SequenceCrossEntropyLoss()
 
-    device = torch.device('cuda')
+    if args.cuda == True:
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
     encoder.to(device)
     decoder.to(device)
 

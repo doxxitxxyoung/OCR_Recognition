@@ -7,14 +7,14 @@ import os
 # import moxing as mox
 
 import pickle
-from tqdm import tqdm
+#from tqdm import tqdm
 from PIL import Image, ImageFile
 import numpy as np
 import random
 import cv2
-import lmdb
+#import lmdb
 import sys
-import six
+#import six
 
 import torch
 from torch.utils import data
