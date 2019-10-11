@@ -21,6 +21,7 @@ import torch.nn as nn
 from torch.backends import cudnn
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from file_list_final import file_train_list, file_val_list
 
@@ -33,7 +34,7 @@ from lib.models.attention_recognition_head import AttentionRecognitionHead
 #from config import get_args
 
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+
 
 current_path = os.path.dirname(os.path.abspath(__file__)) 
 
