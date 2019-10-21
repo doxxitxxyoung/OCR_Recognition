@@ -135,7 +135,8 @@ def Create_char_dict(args):
     return args, char2id_dict, id2char_dict
 
 
-def Create_data_list(args, char2id, train):
+#def Create_data_list(args, char2id, train):
+def Create_data_list(args, char2id, id2char, train):
     #   input path for individual data list
     if train == True:
         filenames = [x+'.xml' for x in file_train_list]
@@ -171,9 +172,24 @@ def Create_data_list(args, char2id, train):
                     if char in char2id:
                         label_list.append(char2id[char])
                     else:
+                        """
                         ## add the unknown token
                         print('{0} is out of vocabulary.'.format(char))
                         label_list.append(char2id['UNKNOWN'])
+                        """
+                        #   add to vocab only if in train.
+                        if (train) & (not args.use_pretrained):
+                            print('{0} is out of vocabulary & added to vocab.'.format(char))
+                            tmp_max_idx = max(char2id.values)
+                            char2id[char] = tmp_max_idx
+                            id2char[tmp_max_idx] = char
+                            label_list.append(char2id[char])
+                        else:
+                            print('{0} is out of vocabulary.'.format(char))
+                            label_list.append(char2id['UNKNOWN'])
+                            
+
+
                 ## add a stop token
                 label_list = label_list + [char2id['EOS']]
 
@@ -190,7 +206,7 @@ def Create_data_list(args, char2id, train):
         except:
             pass
 
-    return input_list, args
+    return input_list, char2id, id2char, args
 
 #   ver 2
 #def main_aster(args):
@@ -221,6 +237,7 @@ def main_aster():
         print('using cpu.')
         torch.set_default_tensor_type('torch.FloatTensor')
 
+
     #   Create Character dict & max seq len
     args, char2id_dict , id2char_dict= Create_char_dict(args)
 
@@ -231,12 +248,16 @@ def main_aster():
     print('max len : '+str(args.max_len))
     
     #   Create data list
-    train_list, args = Create_data_list(args, char2id_dict, True)
-    test_list, args = Create_data_list(args, char2id_dict, False)
+#    train_list, args = Create_data_list(args, char2id_dict, True)
+#    test_list, args = Create_data_list(args, char2id_dict, False)
+    train_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
+                                            char2id_dict, id2char_dict, True)
+    test_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
+                                            char2id_dict, id2char_dict, False)
 
 
 
-    encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group)
+    encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group, use_cuda = args.cuda)
 
     encoder_out_planes = encoder.out_planes
 
@@ -244,23 +265,42 @@ def main_aster():
                                         in_planes = encoder_out_planes,
                                         sDim = args.decoder_sdim,
                                         attDim = args.attDim,
-                                        max_len_labels = args.max_len)
+                                        max_len_labels = args.max_len,
+                                        use_cuda = args.cuda)
 
     #   Load pretrained weights
     if not args.eval:
-        pretrain_path = './data/demo.pth.tar'
-        pretrained_dict = torch.load(pretrain_path)['state_dict']
-        encoder_dict = {}
-        decoder_dict = {}
-        for i, x in enumerate(pretrained_dict.keys()):
-            if 'encoder' in x:
-                encoder_dict['.'.join(x.split('.')[1:])] = pretrained_dict[x]
-            elif 'decoder' in x:
-                decoder_dict['.'.join(x.split('.')[1:])] = pretrained_dict[x]
-        encoder.load_state_dict(encoder_dict)
-        decoder.load_state_dict(decoder_dict)
-        print('pretrained model loaded')
+        if args.use_pretrained:
+            #   use pretrained model
+            pretrain_path = './data/demo.pth.tar'
+            pretrained_dict = torch.load(pretrain_path)['state_dict']
+            encoder_dict = {}
+            decoder_dict = {}
+            for i, x in enumerate(pretrained_dict.keys()):
+                if 'encoder' in x:
+                    encoder_dict['.'.join(x.split('.')[1:])] = pretrained_dict[x]
+                elif 'decoder' in x:
+                    decoder_dict['.'.join(x.split('.')[1:])] = pretrained_dict[x]
+            encoder.load_state_dict(encoder_dict)
+            decoder.load_state_dict(decoder_dict)
+            print('pretrained model loaded')
+
+        else:
+            #   init model parameters
+            def init_weights(m):
+                if type(m) == nn.Linear:
+                    torch.nn.init.xavier_uniform(m.weight)
+                    #m.bias.data.fill_(0.01)
+
+            encoder.apply(init_weights)
+            decoder.apply(init_weights)
+            print('Random weight initialized!')
+
+
+
+
     else:
+        #   no training
 #        encoder.load_state_dict(torch.load('../params/encoder_final'))
 #        decoder.load_state_dict(torch.load('../params/decoder_final'))
         encoder.load_state_dict(torch.load('params/encoder_final'))
@@ -445,7 +485,7 @@ class Pred_Aster():
 
         #   init model
 
-        encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group)
+        encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group, use_cuda = args.cuda)
 
         encoder_out_planes = encoder.out_planes
 
@@ -453,7 +493,8 @@ class Pred_Aster():
                                             in_planes = encoder_out_planes,
                                             sDim = args.decoder_sdim,
                                             attDim = args.attDim,
-                                            max_len_labels = args.max_len)
+                                            max_len_labels = args.max_len,
+                                            use_cuda = args.cuda)
 
         encoder.load_state_dict(torch.load('params/encoder_final'))
         decoder.load_state_dict(torch.load('params/decoder_final'))

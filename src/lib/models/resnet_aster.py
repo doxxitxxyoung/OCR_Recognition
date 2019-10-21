@@ -64,10 +64,11 @@ class AsterBlock(nn.Module):
 class ResNet_ASTER(nn.Module):
   """For aster or crnn"""
 
-  def __init__(self, with_lstm=False, n_group=1):
+  def __init__(self, with_lstm=False, n_group=1, use_cuda=True):
     super(ResNet_ASTER, self).__init__()
     self.with_lstm = with_lstm
     self.n_group = n_group
+    self.use_cuda = use_cuda
 
     in_channels = 3
 #    in_channels = 1
@@ -113,8 +114,10 @@ class ResNet_ASTER(nn.Module):
 
   def forward(self, x):
     ####
-    
-#    x = x.type(torch.cuda.FloatTensor) #    128 x 3 x 64 x 144
+    if self.use_cuda:
+      x = x.cuda()
+#     x = x.type(torch.cuda.FloatTensor) #    128 x 3 x 64 x 144
+
 #    if len(x.size()) == 3:
 #      x = x.unsqueeze(1) # no of channels : 1
         

@@ -19,8 +19,11 @@ class Get_ocr_args():
         self.image_format = 'pil'
 
 #       self.cuda = False
-        self.cuda = False
+        self.cuda = True
         self.eval = False
+        self.use_pretrained = False
+
+        self.save_preds = False
 
         #   if training
         self.momentum = 0.9
@@ -28,7 +31,7 @@ class Get_ocr_args():
         self.grad_clip = 1.0
         self.loss_weights = [1,1,1]
 #        self.epochs = 6
-        self.n_epochs = 6
+        self.n_epochs = 10
         self.batch_size = 128
         self.lr = 0.1
         self.rec_num_classes = 26

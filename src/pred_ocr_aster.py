@@ -260,7 +260,7 @@ class Pred_Aster():
 
         #   init model
 
-        encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group)
+        encoder = ResNet_ASTER(with_lstm = True, n_group = args.n_group, use_cuda = args.cuda)
 
         encoder_out_planes = encoder.out_planes
 
@@ -268,7 +268,8 @@ class Pred_Aster():
                                             in_planes = encoder_out_planes,
                                             sDim = args.decoder_sdim,
                                             attDim = args.attDim,
-                                            max_len_labels = args.max_len)
+                                            max_len_labels = args.max_len,
+                                            use_cuda = args.cuda)
 
 #        encoder.load_state_dict(torch.load('params/encoder_final'))
 #        decoder.load_state_dict(torch.load('params/decoder_final'))
