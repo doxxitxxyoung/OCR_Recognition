@@ -13,3 +13,5 @@ cv2==4.1.1
 2. Unzip files to the folder with same name respectively.
 
 3. run run_model.sh
+
+

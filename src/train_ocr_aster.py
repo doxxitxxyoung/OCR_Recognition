@@ -592,6 +592,9 @@ class Pred_Aster():
 
 
 if __name__ == "__main__":
+
+    
+
     main_aster()
 """
 

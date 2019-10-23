@@ -21,7 +21,7 @@ class Get_ocr_args():
 #       self.cuda = False
         self.cuda = True
         self.eval = False
-        self.use_pretrained = False
+        self.use_pretrained = True
 
         self.save_preds = False
 
@@ -35,6 +35,15 @@ class Get_ocr_args():
         self.batch_size = 128
         self.lr = 0.1
         self.rec_num_classes = 26
+
+        #   Rectification
+       
+        self.STN_ON == False
+        self.tps_inputsize = [32, 64]
+        self.tps_outputsize = [32,100]
+        self.num_control_points = 20
+        self.tps_margins = [0.05, 0.05]
+        self.stn_activation = 'none'
 
 
 
