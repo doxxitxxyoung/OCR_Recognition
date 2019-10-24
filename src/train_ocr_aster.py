@@ -11,7 +11,7 @@ import argparse
 import os
 import sys
 
-from file_list_final import file_train_list, file_val_list
+#from file_list_final import file_train_list, file_val_list
 
 
 from sklearn.model_selection import KFold
@@ -32,6 +32,7 @@ from lib.datasets.dataset import AlignCollate, ResizeNormalize
 from lib.utils.serialization import load_checkpoint, save_checkpoint
 
 import pickle
+import random
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
@@ -218,9 +219,84 @@ def Create_data_list(args, char2id, id2char, train):
 
     return input_list, char2id, id2char, args
 
+
+
+def Create_data_list_byfolder(args, char2id, id2char, train, file_list):
+
+
+    #   input path for individual data list
+    filenames = [x+'.xml' for x in file_list]
+    if train == True:
+        print('train file number : '+str(len(filenames)))
+    else:
+        print('test file number : '+str(len(filenames)))
+
+
+    #   get train-test datalist (pil image)
+
+    input_list = []
+
+    for filename in filenames:
+        try:
+
+            image, coordinates, labels = get_data(filename, args)
+
+            cropped_images = crop_image(image, coordinates, args, resample = Image.BICUBIC)
+
+            for i, crop in enumerate(cropped_images):
+                #   convert to cv2 format
+
+                if args.image_format == 'cv2':
+                    crop = crop
+                else:
+                    crop_cv2 = np.asarray(crop, dtype = np.float)
+
+                ## fill with the padding token
+                label = np.full((args.max_len,), char2id['PADDING'], dtype=np.int)
+                label_list = []
+                for char in labels[i]:
+                    if char in char2id:
+                        label_list.append(char2id[char])
+                    else:
+                        ## add the unknown token
+                        print('{0} is out of vocabulary.'.format(char))
+                        label_list.append(char2id['UNKNOWN'])
+                        """
+                        #   add to vocab only if in train.
+                        if (train) & (not args.use_pretrained):
+                            print('{0} is out of vocabulary & added to vocab.'.format(char))
+                            tmp_max_idx = max(char2id.values)
+                            char2id[char] = tmp_max_idx
+                            id2char[tmp_max_idx] = char
+                            label_list.append(char2id[char])
+                        else:
+                            print('{0} is out of vocabulary.'.format(char))
+                            label_list.append(char2id['UNKNOWN'])
+                        """
+                            
+
+
+                ## add a stop token
+                label_list = label_list + [char2id['EOS']]
+
+                label[:len(label_list)] = np.array(label_list)
+
+
+                
+                # label length
+                label_len = len(label)
+
+                input_list.append({'images' : crop, 
+                                    'rec_targets' : label,
+                                    'rec_lengths' : label_len})
+        except:
+            pass
+
+    return input_list, char2id, id2char, args
+
 #   ver 2
 #def main_aster(args):
-def main_aster():
+def main_aster(folder_name):
 
 #    from config import get_args
 #    args = get_args(sys.argv[1:])
@@ -260,10 +336,30 @@ def main_aster():
     #   Create data list
 #    train_list, args = Create_data_list(args, char2id_dict, True)
 #    test_list, args = Create_data_list(args, char2id_dict, False)
-    train_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
-                                            char2id_dict, id2char_dict, True)
-    test_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
-                                            char2id_dict, id2char_dict, False)
+#    train_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
+#                                            char2id_dict, id2char_dict, True)
+#    test_list, char2id_dict, id2char_dict, args = Create_data_list(args, 
+#                                            char2id_dict, id2char_dict, False)
+
+    #   Get file list for train/valid set
+    filenames = glob.glob('./data/' + folder_name + '/*/*.xml')
+    filenames = [x[:-4] for x in filenames]
+    print('file len : '+str(len(filenames)))
+
+
+
+    #   split filenames into train list / test list
+    seed = 44
+    train_ratio = 0.8
+    random.seed(seed)
+    random.shuffle(filenames)
+    train_len = int(len(filenames)*train_ratio)
+    file_train_list = filenames[:train_len]
+    file_test_list = filenames[train_len:]
+    train_list, char2id_dict, id2char_dict, args = Create_data_list_byfolder(args, 
+                                            char2id_dict, id2char_dict, True, file_train_list)
+    test_list, char2id_dict, id2char_dict, args = Create_data_list_byfolder(args, 
+                                            char2id_dict, id2char_dict, False, file_test_list)
 
 
 
@@ -594,8 +690,8 @@ class Pred_Aster():
 if __name__ == "__main__":
 
     
-
-    main_aster()
+    Folder_name = 'dataset_final'
+    main_aster(Folder_name)
 """
 
 

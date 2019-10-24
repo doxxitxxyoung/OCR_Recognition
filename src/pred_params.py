@@ -38,7 +38,7 @@ class Get_ocr_args():
 
         #   Rectification
        
-        self.STN_ON == False
+        self.STN_ON = False
         self.tps_inputsize = [32, 64]
         self.tps_outputsize = [32,100]
         self.num_control_points = 20
