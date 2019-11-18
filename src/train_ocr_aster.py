@@ -201,6 +201,13 @@ def Create_data_list_byfolder(args, char2id, id2char, file_list):
 
 #   ver 2
 def main_aster(folder_name):
+    """
+    @Input
+    folder_name : name of the folder where training data are stored.
+     
+    @Output
+    trained parameters are stored in 'params' folder
+    """
 
     #   arguments are stored in pred_params.py
     from pred_params import Get_ocr_args
@@ -338,14 +345,17 @@ def main_aster(folder_name):
             loss_rec.backward()
             optimizer.step()
 
+    #   Training phase ends
+
     #   this is where trained model parameters are saved
 
     torch.save(encoder.state_dict(), 'params/encoder_final')
     torch.save(decoder.state_dict(), 'params/decoder_final')
 
 if __name__ == "__main__":
+
     
-    Folder_name = 'dataset_final'   #   This is the folder where training data are stored.  
+    Folder_name = 'dataset_final'   #   This is the folder where training data are stored in 'data' folder. 
     main_aster(Folder_name)
 
 

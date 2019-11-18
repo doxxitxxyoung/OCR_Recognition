@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 from PIL import ImageEnhance
 import cv2
-#from ocr import get_ocr
 import glob
 
 import argparse
@@ -26,12 +25,8 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from file_list_final import file_train_list, file_val_list
 
 from lib.datasets.dataset import AlignCollate, ResizeNormalize
-#from lib.utils.serialization import load_checkpoint, save_checkpoint
-#from lib.models.model_builder import ModelBuilder
 from lib.models.resnet_aster import ResNet_ASTER
 from lib.models.attention_recognition_head import AttentionRecognitionHead
-#from lib.loss.sequenceCrossEntropyLoss import SequenceCrossEntropyLoss
-#from config import get_args
 
 
 
@@ -150,6 +145,10 @@ def get_data_image(filename, args):
 
 class Pred_Aster():
     def __init__(self, cuda):
+        """
+        cuda : set to True for GPU usage, False for CPU usage
+        """
+
         from pred_params import Get_ocr_args
         args = Get_ocr_args()
 
@@ -198,12 +197,8 @@ class Pred_Aster():
             encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
             decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
         else:
-            if args.cuda:
-                encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final'))
-                decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final'))
-            else:
-                encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final',map_location=torch.device('cpu')))
-                decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final',map_location=torch.device('cpu')))
+            encoder.load_state_dict(torch.load(current_path + '/../params/encoder_final',map_location=torch.device('cpu')))
+            decoder.load_state_dict(torch.load(current_path + '/../params/decoder_final',map_location=torch.device('cpu')))
         print('fine-tuned model loaded')
 
 
