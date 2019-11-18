@@ -118,6 +118,9 @@ def crop_image(image,coordinates, args, resample = Image.BICUBIC):
     return cropped_images
 
 def Create_char_dict(args):
+    """
+    Returns Charactor to indexes / indexes to character dictionaries
+    """
     import string
     voc = list(string.printable[:-6])
     voc.append('EOS')
@@ -128,64 +131,6 @@ def Create_char_dict(args):
     id2char_dict = dict(zip(range(len(voc)), voc))
 
     return args, char2id_dict, id2char_dict
-
-
-def Create_data_list(args, char2id, id2char, train):
-    #   input path for individual data list
-    if train == True:
-        filenames = [x+'.xml' for x in file_train_list]
-        print('train file number : '+str(len(filenames)))
-    else:
-        filenames = [x+'.xml' for x in file_val_list]
-        print('test file number : '+str(len(filenames)))
-
-    #   get train-test datalist (pil image)
-
-    input_list = []
-
-    for filename in filenames:
-        try:
-
-            image, coordinates, labels = get_data(filename, args)
-
-            cropped_images = crop_image(image, coordinates, args, resample = Image.BICUBIC)
-
-            for i, crop in enumerate(cropped_images):
-                #   convert to cv2 format
-
-                if args.image_format == 'cv2':
-                    crop = crop
-                else:
-                    crop_cv2 = np.asarray(crop, dtype = np.float)
-
-                ## fill with the padding token
-                label = np.full((args.max_len,), char2id['PADDING'], dtype=np.int)
-                label_list = []
-                for char in labels[i]:
-                    if char in char2id:
-                        label_list.append(char2id[char])
-                    else:
-                        ## add the unknown token
-                        print('{0} is out of vocabulary.'.format(char))
-                        label_list.append(char2id['UNKNOWN'])
-
-                ## add a stop token
-                label_list = label_list + [char2id['EOS']]
-
-                label[:len(label_list)] = np.array(label_list)
-
-
-                
-                # label length
-                label_len = len(label)
-
-                input_list.append({'images' : crop, 
-                                    'rec_targets' : label,
-                                    'rec_lengths' : label_len})
-        except:
-            pass
-
-    return input_list, char2id, id2char, args
 
 
 
