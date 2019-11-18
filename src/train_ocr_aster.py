@@ -306,7 +306,7 @@ def main_aster(folder_name):
 
     rec_crit = SequenceCrossEntropyLoss()
 
-    if (args.cuda == True) & :
+    if (args.cuda == True) & torch.cuda.is_available():
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
