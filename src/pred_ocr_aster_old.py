@@ -99,10 +99,13 @@ def crop_image(image,coordinates, args, resample = Image.BICUBIC):
     cropped_images = []
     for i,coordinate in enumerate(coordinates):
         if args.image_format == 'cv2':
+#            coordinate = [coordinate[0],coordinate[2], coordinate[1],coordinate[3]]
+#            cropped_image = image[coordinate[0]:coordinate[2], coordinate[1]:coordinate[3]]
             cropped_image = image[coordinate[1]:coordinate[3], coordinate[0]:coordinate[2]]
             
         else:
             cropped_image = image.crop(coordinate)
+            # print("cropped_image.size=",cropped_image.size)
 
             # resize
             h, w = cropped_image.size
@@ -110,11 +113,15 @@ def crop_image(image,coordinates, args, resample = Image.BICUBIC):
             # ratio = 1.5
             cropped_image = cropped_image.resize((int(h*args.resize), int(w*args.resize)),
                                                     resample= resample)
+            # print("cropped_image.size=",cropped_image.size)
             sharpness_enhancer = ImageEnhance.Sharpness(cropped_image)
             cropped_image = sharpness_enhancer.enhance(args.sharpness)
             contrast_enhancer = ImageEnhance.Contrast(cropped_image)
             cropped_image = contrast_enhancer.enhance(args.contrast)
             
+            # if i == 0:
+            #     cropped_image.show()
+
         cropped_images.append(cropped_image)
     
     return cropped_images
@@ -198,7 +205,7 @@ def Create_data_list(args, char2id, train):
 
     return input_list, args
 
-def get_data_image(filename, args):
+def get_data_pred(filename, args):
     """
     @ input
     filename: ex. kr00001973962b1p-4
@@ -207,6 +214,7 @@ def get_data_image(filename, args):
     image
     """
     
+#        xmlfile = filename
     jpgfile = filename.replace(".xml",".jpg")
     
     if args.image_format == 'cv2':
@@ -231,6 +239,8 @@ class Pred_Aster():
             torch.cuda.manual_seed_all(args.seed)
             cudnn.benchmark = True
             torch.backends.cudnn.deterministic = True
+
+#        args.cuda = True and torch.cuda.is_available()
 
         if args.cuda:
             print('using cuda.')
@@ -315,7 +325,7 @@ class Pred_Aster():
         if args.cuda:
             device = self.device
 
-        image = get_data_image(image_path, args)
+        image = get_data_pred(image_path, args)
 
         cropped_images = crop_image(image,coordinates, args, resample = Image.BICUBIC) # list of imgs
 
@@ -352,11 +362,18 @@ class Pred_Aster():
         return test_pred_char
 
 
+"""
+if __name__ == "__main__":
+    main_aster()
+"""
+
 
 if __name__ == "__main__":
 
     filenames = [x+'.xml' for x in file_val_list]
 
+#    from config import get_args
+#    args = get_args(sys.argv[1:])
     from pred_params import Get_ocr_args
     args = Get_ocr_args()
 
